@@ -83,7 +83,7 @@ function generateRandomCard() {
 
 // activation related functions:
 
-async function validateCard( cardId: number ) {
+export async function validateCard( cardId: number ) {
   const card = await checkCardExistence(cardId);
   await checkCardExpiration(card.expirationDate);
   if ( card.isVirtual ) throw { type: 'unprocessable_entity', message: 'Operation not available for virtual card' };
@@ -104,15 +104,15 @@ async function checkCardExpiration( expirationDate: string ) {
 
 // Net Worth related functions: 
 
-async function getPayments( cardId: number ) {
+export async function getPayments( cardId: number ) {
   return await paymentRepository.findByCardId(cardId);
 }
 
-async function getRecharges( cardId: number ) {
+export async function getRecharges( cardId: number ) {
   return await rechargeRepository.findByCardId(cardId);
 }
 
-function calcBalance( payments: any, recharges: any ) {
+export function calcBalance( payments: any, recharges: any ) {
   const totalPayments = payments.reduce( (acc: number, cur: any) => acc += cur.amount );
   const totalRecharges = recharges.reduce( (acc: number, cur: any) => acc += cur.amount );
 
