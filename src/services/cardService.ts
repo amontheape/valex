@@ -1,8 +1,11 @@
 import * as cardRepository from '../repositories/cardRepository.js';
 import * as employeeRepository from '../repositories/employeeRepository.js';
+import * as paymentRepository from '../repositories/paymentRepository.js';
+import * as rechargeRepository from '../repositories/rechargeRepository.js';
 import dayjs from 'dayjs';
 import bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
+import { func } from 'joi';
 
 /*** main services ***/
 
@@ -32,6 +35,14 @@ export async function activateCard( cardInfo: any ) {
   const hashedPassword = bcrypt.hashSync(cardInfo.password, 10);
 
   await cardRepository.update(cardInfo.cardId, {...card, password: hashedPassword});
+}
+
+export async function getNetWorth( cardId: number ) {
+  await checkCardExistence( cardId );
+  const payments = getPayments( cardId );
+  const recharges = getRecharges( cardId );
+  const balance = calcBalance( payments, recharges );
+  return {balance, transactions: payments, recharges }
 }
 
 /*** agregate functions ***/
@@ -85,4 +96,21 @@ async function checkCardExistence( cardId: number ) {
 async function checkCardExpiration( expirationDate: string ) {
   if ( dayjs(expirationDate).isBefore(dayjs().format("MM/YY")) ) throw { type: 'bad_request', message: 'Card is expired' }
   return ;
+}
+
+// Net Worth related functions: 
+
+async function getPayments( cardId: number ) {
+  return await paymentRepository.findByCardId(cardId);
+}
+
+async function getRecharges( cardId: number ) {
+  return await rechargeRepository.findByCardId(cardId);
+}
+
+function calcBalance( payments: any, recharges: any ) {
+  const totalPayments = payments.reduce( (acc: number, cur: any) => acc += cur.amount );
+  const totalRecharges = recharges.reduce( (acc: number, cur: any) => acc += cur.amount );
+
+  return totalRecharges - totalPayments;
 }
