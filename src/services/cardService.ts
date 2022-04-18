@@ -5,7 +5,6 @@ import * as rechargeRepository from '../repositories/rechargeRepository.js';
 import dayjs from 'dayjs';
 import bcrypt from 'bcrypt';
 import { faker } from '@faker-js/faker';
-import { func } from 'joi';
 
 /*** main services ***/
 
@@ -45,6 +44,11 @@ export async function getNetWorth( cardId: number ) {
   return {balance, transactions: payments, recharges }
 }
 
+export async function rechargeCard( cardId: number, amount: number) {
+  await validateCard( cardId );
+  await rechargeRepository.insert( {cardId, amount} );
+}
+
 /*** agregate functions ***/
 
 // creation related functions:
@@ -82,7 +86,7 @@ function generateRandomCard() {
 async function validateCard( cardId: number ) {
   const card = await checkCardExistence(cardId);
   await checkCardExpiration(card.expirationDate);
-  if ( card.isVirtual ) throw { type: 'unprocessable_entity', message: 'Cannot activate virtual card' };
+  if ( card.isVirtual ) throw { type: 'unprocessable_entity', message: 'Operation not available for virtual card' };
   return card;
 }
 

@@ -19,3 +19,10 @@ export async function getNetWorth( req: Request, res: Response ) {
   const netWorth = await cardService.getNetWorth(parseInt(cardId));
   return res.status(200).send(netWorth);
 }
+
+export async function rechargeCard( req: Request, res: Response ) {
+  const cardId = req.params.id;
+  const { amount } = req.body;
+  await cardService.rechargeCard(parseInt(cardId), amount);
+  res.sendStatus(200);
+}
