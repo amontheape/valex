@@ -30,8 +30,10 @@ async function checkBusiness( id: number, card: any) {
 }
 
 async function checkBalance(cardId : number, amount: number) {
-  const payments = getPayments(cardId);
-  const recharges = getRecharges(cardId);
+  let payments = await getPayments( cardId );
+  if ( payments.length === 0 ) payments = [];
+  let recharges = await getRecharges( cardId );
+  if ( recharges.length === 0 ) recharges = [];
   const balance = calcBalance( payments, recharges);
   if ( balance < amount ) throw { type: 'bad_request', message: 'insufficient balance'}
   return ;

@@ -38,9 +38,11 @@ export async function activateCard( cardInfo: any ) {
 
 export async function getNetWorth( cardId: number ) {
   await checkCardExistence( cardId );
-  const payments = getPayments( cardId );
-  const recharges = getRecharges( cardId );
-  const balance = calcBalance( payments, recharges );
+  let payments = await getPayments( cardId );
+  if ( payments.length === 0 ) payments = [];
+  let recharges = await getRecharges( cardId );
+  if ( recharges.length === 0 ) recharges = [];
+  const balance = calcBalance( payments, recharges ); 
   return {balance, transactions: payments, recharges }
 }
 
@@ -74,9 +76,11 @@ function formatName( fullName: string ) {
 }
 
 function generateRandomCard() {
-    const number = faker.finance.creditCardNumber('mastercard');
-    const hashedSecurityCode = bcrypt.hashSync(faker.finance.creditCardCVV(), 10);
-    const expirationDate = dayjs().add(5, "year").format("MM/YY");
+  const number = faker.finance.creditCardNumber('mastercard');
+  const latestCVV = faker.finance.creditCardCVV();
+  console.log(`latest CVV created: ${latestCVV}`);
+  const hashedSecurityCode = bcrypt.hashSync(latestCVV, 10);
+  const expirationDate = dayjs().add(5, "year").format("MM/YY");
 
   return { number, securityCode: hashedSecurityCode, expirationDate }
 }
@@ -113,8 +117,14 @@ export async function getRecharges( cardId: number ) {
 }
 
 export function calcBalance( payments: any, recharges: any ) {
-  const totalPayments = payments.reduce( (acc: number, cur: any) => acc += cur.amount );
-  const totalRecharges = recharges.reduce( (acc: number, cur: any) => acc += cur.amount );
+  let totalPayments : any, totalRecharges: any;
+  if ( payments === [] ) { 
+   totalPayments = 0; 
+  } else { totalPayments = payments.reduce( (acc: number, cur: any) => acc += cur.amount , 0); }
+  
+  if ( recharges === [] ) {
+    totalRecharges = 0;
+  } else { totalRecharges = recharges.reduce( (acc: number, cur: any) => acc += cur.amount , 0); }
 
   return totalRecharges - totalPayments;
 }
